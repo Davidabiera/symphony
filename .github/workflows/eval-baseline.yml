@@ -1,0 +1,70 @@
+name: eval-baseline
+
+on:
+  workflow_dispatch:
+    inputs:
+      dataset_path:
+        description: "Path to the published machine-readable dataset artifact"
+        required: true
+        type: string
+      rubric_path:
+        description: "Path to the published machine-readable rubric artifact"
+        required: true
+        type: string
+      eval_id:
+        description: "Eval job identifier"
+        required: true
+        default: "EVAL-001"
+        type: string
+      rel_gate_id:
+        description: "Release gate identifier"
+        required: true
+        default: "RG-P0-001"
+        type: string
+
+jobs:
+  eval-baseline:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: elixir
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up mise tools
+        uses: jdx/mise-action@v3
+        with:
+          install: true
+          cache: true
+          working_directory: elixir
+
+      - name: Cache deps and build
+        uses: actions/cache@v4
+        with:
+          path: |
+            elixir/deps
+            elixir/_build
+          key: ${{ runner.os }}-mix-${{ hashFiles('elixir/mix.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-mix-
+
+      - name: Install dependencies
+        run: make deps
+
+      - name: Run baseline eval
+        run: >
+          mix symphony.eval.run
+          --dataset "${{ github.event.inputs.dataset_path }}"
+          --rubric "${{ github.event.inputs.rubric_path }}"
+          --output-dir "tmp/evals/${{ github.event.inputs.eval_id }}"
+          --eval-id "${{ github.event.inputs.eval_id }}"
+          --rel-gate-id "${{ github.event.inputs.rel_gate_id }}"
+
+      - name: Upload baseline artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: baseline-${{ github.event.inputs.eval_id }}
+          path: elixir/tmp/evals/${{ github.event.inputs.eval_id }}
+          if-no-files-found: error

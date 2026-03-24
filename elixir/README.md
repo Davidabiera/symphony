@@ -203,6 +203,29 @@ The live test creates a temporary Linear project and issue, writes a temporary `
 a real agent turn, verifies the workspace side effect, requires Codex to comment on and close the
 Linear issue, then marks the project completed so the run remains visible in Linear.
 
+## Evaluation Pipeline
+
+Validate machine-readable dataset and rubric inputs:
+
+```bash
+mix symphony.eval.validate --dataset /path/to/dataset.json --rubric /path/to/rubric.json
+```
+
+Run the smoke pipeline or a full baseline replay and write retrievable artifacts:
+
+```bash
+mix symphony.eval.run \
+  --dataset /path/to/dataset.json \
+  --rubric /path/to/rubric.json \
+  --output-dir tmp/evals/EVAL-001 \
+  --eval-id EVAL-001 \
+  --rel-gate-id RG-P0-001
+```
+
+For PR CI, `make eval-smoke` runs against the committed smoke fixtures under
+`test/fixtures/eval/`. Full `EVAL-001` still depends on published machine-readable dataset and
+rubric artifacts being available to the workflow or local operator.
+
 ## FAQ
 
 ### Why Elixir?
