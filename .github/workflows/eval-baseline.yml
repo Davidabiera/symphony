@@ -1,6 +1,16 @@
 name: eval-baseline
 
 on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/eval-baseline.yml"
+      - "elixir/lib/symphony_elixir/eval.ex"
+      - "elixir/lib/mix/tasks/symphony.eval.run.ex"
+      - "elixir/lib/mix/tasks/symphony.eval.validate.ex"
+      - "elixir/Makefile"
+      - "elixir/mix.exs"
   workflow_dispatch:
     inputs:
       pilot_ref:
@@ -33,9 +43,8 @@ jobs:
   eval-baseline:
     runs-on: ubuntu-latest
     env:
-      PILOT_ROOT: ${{ github.workspace }}/symphony-pilot
-      DATASET_PATH: ${{ github.workspace }}/symphony-pilot/${{ github.event.inputs.dataset_relpath }}
-      RUBRIC_PATH: ${{ github.workspace }}/symphony-pilot/${{ github.event.inputs.rubric_relpath }}
+      DATASET_PATH: ${{ github.workspace }}/symphony-pilot/${{ github.event.inputs.dataset_relpath || 'docs/data/artifacts/ds-ssi-wcp-v1.0.0.dataset.json' }}
+      RUBRIC_PATH: ${{ github.workspace }}/symphony-pilot/${{ github.event.inputs.rubric_relpath || 'docs/data/artifacts/rubric-v0.json' }}
     defaults:
       run:
         working-directory: elixir
@@ -55,7 +64,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Davidabiera/symphony-pilot
-          ref: ${{ github.event.inputs.pilot_ref }}
+          ref: ${{ github.event.inputs.pilot_ref || 'main' }}
           path: symphony-pilot
           token: ${{ secrets.SYMPHONY_PILOT_REPO_READ_TOKEN != '' && secrets.SYMPHONY_PILOT_REPO_READ_TOKEN || github.token }}
 
