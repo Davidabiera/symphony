@@ -3,13 +3,20 @@ name: eval-baseline
 on:
   workflow_dispatch:
     inputs:
-      dataset_path:
-        description: "Path to the published machine-readable dataset artifact"
-        required: true
+      pilot_ref:
+        description: "symphony-pilot ref to read published eval artifacts from"
+        required: false
+        default: "main"
         type: string
-      rubric_path:
-        description: "Path to the published machine-readable rubric artifact"
-        required: true
+      dataset_relpath:
+        description: "Relative path inside symphony-pilot for the published dataset artifact"
+        required: false
+        default: "docs/data/artifacts/ds-ssi-wcp-v1.0.0.dataset.json"
+        type: string
+      rubric_relpath:
+        description: "Relative path inside symphony-pilot for the published rubric artifact"
+        required: false
+        default: "docs/data/artifacts/rubric-v0.json"
         type: string
       eval_id:
         description: "Eval job identifier"
@@ -25,6 +32,10 @@ on:
 jobs:
   eval-baseline:
     runs-on: ubuntu-latest
+    env:
+      PILOT_ROOT: ${{ github.workspace }}/symphony-pilot
+      DATASET_PATH: ${{ github.workspace }}/symphony-pilot/${{ github.event.inputs.dataset_relpath }}
+      RUBRIC_PATH: ${{ github.workspace }}/symphony-pilot/${{ github.event.inputs.rubric_relpath }}
     defaults:
       run:
         working-directory: elixir
@@ -40,6 +51,14 @@ jobs:
           cache: true
           working_directory: elixir
 
+      - name: Checkout symphony-pilot artifacts
+        uses: actions/checkout@v4
+        with:
+          repository: Davidabiera/symphony-pilot
+          ref: ${{ github.event.inputs.pilot_ref }}
+          path: symphony-pilot
+          token: ${{ secrets.SYMPHONY_PILOT_REPO_READ_TOKEN != '' && secrets.SYMPHONY_PILOT_REPO_READ_TOKEN || github.token }}
+
       - name: Cache deps and build
         uses: actions/cache@v4
         with:
@@ -53,11 +72,17 @@ jobs:
       - name: Install dependencies
         run: make deps
 
+      - name: Validate published eval inputs
+        run: >
+          mix symphony.eval.validate
+          --dataset "${DATASET_PATH}"
+          --rubric "${RUBRIC_PATH}"
+
       - name: Run baseline eval
         run: >
           mix symphony.eval.run
-          --dataset "${{ github.event.inputs.dataset_path }}"
-          --rubric "${{ github.event.inputs.rubric_path }}"
+          --dataset "${DATASET_PATH}"
+          --rubric "${RUBRIC_PATH}"
           --output-dir "tmp/evals/${{ github.event.inputs.eval_id }}"
           --eval-id "${{ github.event.inputs.eval_id }}"
           --rel-gate-id "${{ github.event.inputs.rel_gate_id }}"
