@@ -43,6 +43,11 @@ jobs:
   eval-baseline:
     runs-on: ubuntu-latest
     env:
+      PILOT_REF: ${{ github.event.inputs.pilot_ref || 'main' }}
+      DATASET_RELPATH: ${{ github.event.inputs.dataset_relpath || 'docs/data/artifacts/ds-ssi-wcp-v1.0.0.dataset.json' }}
+      RUBRIC_RELPATH: ${{ github.event.inputs.rubric_relpath || 'docs/data/artifacts/rubric-v0.json' }}
+      EVAL_ID: ${{ github.event.inputs.eval_id || 'EVAL-001' }}
+      REL_GATE_ID: ${{ github.event.inputs.rel_gate_id || 'RG-P0-001' }}
       DATASET_PATH: ${{ github.workspace }}/symphony-pilot/${{ github.event.inputs.dataset_relpath || 'docs/data/artifacts/ds-ssi-wcp-v1.0.0.dataset.json' }}
       RUBRIC_PATH: ${{ github.workspace }}/symphony-pilot/${{ github.event.inputs.rubric_relpath || 'docs/data/artifacts/rubric-v0.json' }}
     defaults:
@@ -64,7 +69,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Davidabiera/symphony-pilot
-          ref: ${{ github.event.inputs.pilot_ref || 'main' }}
+          ref: ${{ env.PILOT_REF }}
           path: symphony-pilot
           token: ${{ secrets.SYMPHONY_PILOT_REPO_READ_TOKEN != '' && secrets.SYMPHONY_PILOT_REPO_READ_TOKEN || github.token }}
 
@@ -92,13 +97,13 @@ jobs:
           mix symphony.eval.run
           --dataset "${DATASET_PATH}"
           --rubric "${RUBRIC_PATH}"
-          --output-dir "tmp/evals/${{ github.event.inputs.eval_id }}"
-          --eval-id "${{ github.event.inputs.eval_id }}"
-          --rel-gate-id "${{ github.event.inputs.rel_gate_id }}"
+          --output-dir "tmp/evals/${EVAL_ID}"
+          --eval-id "${EVAL_ID}"
+          --rel-gate-id "${REL_GATE_ID}"
 
       - name: Upload baseline artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: baseline-${{ github.event.inputs.eval_id }}
-          path: elixir/tmp/evals/${{ github.event.inputs.eval_id }}
+          name: baseline-${{ env.EVAL_ID }}
+          path: elixir/tmp/evals/${{ env.EVAL_ID }}
           if-no-files-found: error
