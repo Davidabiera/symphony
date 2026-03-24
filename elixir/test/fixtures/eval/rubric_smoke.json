@@ -1,0 +1,17 @@
+{
+  "rubric_version": "rubric-v0",
+  "items": [
+    {
+      "rubric_item_id": "RB-001",
+      "criterion": "Produces the required durable report artifacts.",
+      "threshold_id": "DS-THRESH-001",
+      "weight": 0.6
+    },
+    {
+      "rubric_item_id": "RB-002",
+      "criterion": "Carries the expected traceability identifiers.",
+      "threshold_id": "DS-THRESH-006",
+      "weight": 0.4
+    }
+  ]
+}

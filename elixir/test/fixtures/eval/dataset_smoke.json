@@ -1,0 +1,39 @@
+{
+  "dataset_version": "DS-SSI-WCP-v1.0.0",
+  "cases": [
+    {
+      "dataset_case_id": "GD-001",
+      "prompt_version": "PV-BASELINE-001",
+      "rel_gate_id": "RG-P0-001",
+      "prd_feature_id": ["FEAT-001", "FEAT-002"],
+      "srs_requirement_id": ["SRS-002", "SRS-009"],
+      "app_flow_id": "AF-002",
+      "input": {
+        "mission_type": "Execute Ready Ticket",
+        "issue_identifier": "SSI-100",
+        "title": "Validate bounded issue pack"
+      },
+      "reference_scores": {
+        "RB-001": 1.0,
+        "RB-002": 0.9
+      }
+    },
+    {
+      "dataset_case_id": "GD-002",
+      "prompt_version": "PV-BASELINE-001",
+      "rel_gate_id": "RG-P0-001",
+      "prd_feature_id": "FEAT-003",
+      "srs_requirement_id": ["SRS-005", "SRS-009"],
+      "app_flow_id": "AF-003",
+      "input": {
+        "mission_type": "Execute Ready Ticket",
+        "issue_identifier": "SSI-101",
+        "title": "Write report artifacts"
+      },
+      "reference_scores": {
+        "RB-001": 0.8,
+        "RB-002": 1.0
+      }
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+name: eval-baseline
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/eval-baseline.yml"
+      - "elixir/lib/symphony_elixir/eval.ex"
+      - "elixir/lib/mix/tasks/symphony.eval.run.ex"
+      - "elixir/lib/mix/tasks/symphony.eval.validate.ex"
+      - "elixir/Makefile"
+      - "elixir/mix.exs"
+  workflow_dispatch:
+    inputs:
+      pilot_ref:
+        description: "symphony-pilot ref to read published eval artifacts from"
+        required: false
+        default: "main"
+        type: string
+      dataset_relpath:
+        description: "Relative path inside symphony-pilot for the published dataset artifact"
+        required: false
+        default: "docs/data/artifacts/ds-ssi-wcp-v1.0.0.dataset.json"
+        type: string
+      rubric_relpath:
+        description: "Relative path inside symphony-pilot for the published rubric artifact"
+        required: false
+        default: "docs/data/artifacts/rubric-v0.json"
+        type: string
+      eval_id:
+        description: "Eval job identifier"
+        required: true
+        default: "EVAL-001"
+        type: string
+      rel_gate_id:
+        description: "Release gate identifier"
+        required: true
+        default: "RG-P0-001"
+        type: string
+
+jobs:
+  eval-baseline:
+    runs-on: ubuntu-latest
+    env:
+      PILOT_REF: ${{ github.event.inputs.pilot_ref || 'main' }}
+      DATASET_RELPATH: ${{ github.event.inputs.dataset_relpath || 'docs/data/artifacts/ds-ssi-wcp-v1.0.0.dataset.json' }}
+      RUBRIC_RELPATH: ${{ github.event.inputs.rubric_relpath || 'docs/data/artifacts/rubric-v0.json' }}
+      EVAL_ID: ${{ github.event.inputs.eval_id || 'EVAL-001' }}
+      REL_GATE_ID: ${{ github.event.inputs.rel_gate_id || 'RG-P0-001' }}
+      DATASET_PATH: ${{ github.workspace }}/symphony-pilot/${{ github.event.inputs.dataset_relpath || 'docs/data/artifacts/ds-ssi-wcp-v1.0.0.dataset.json' }}
+      RUBRIC_PATH: ${{ github.workspace }}/symphony-pilot/${{ github.event.inputs.rubric_relpath || 'docs/data/artifacts/rubric-v0.json' }}
+    defaults:
+      run:
+        working-directory: elixir
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up mise tools
+        uses: jdx/mise-action@v3
+        with:
+          install: true
+          cache: true
+          working_directory: elixir
+
+      - name: Checkout symphony-pilot artifacts
+        uses: actions/checkout@v4
+        with:
+          repository: Davidabiera/symphony-pilot
+          ref: ${{ env.PILOT_REF }}
+          path: symphony-pilot
+          token: ${{ secrets.SYMPHONY_PILOT_REPO_READ_TOKEN != '' && secrets.SYMPHONY_PILOT_REPO_READ_TOKEN || github.token }}
+
+      - name: Cache deps and build
+        uses: actions/cache@v4
+        with:
+          path: |
+            elixir/deps
+            elixir/_build
+          key: ${{ runner.os }}-mix-${{ hashFiles('elixir/mix.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-mix-
+
+      - name: Install dependencies
+        run: make deps
+
+      - name: Validate published eval inputs
+        run: >
+          mix symphony.eval.validate
+          --dataset "${DATASET_PATH}"
+          --rubric "${RUBRIC_PATH}"
+
+      - name: Run baseline eval
+        run: >
+          mix symphony.eval.run
+          --dataset "${DATASET_PATH}"
+          --rubric "${RUBRIC_PATH}"
+          --output-dir "tmp/evals/${EVAL_ID}"
+          --eval-id "${EVAL_ID}"
+          --rel-gate-id "${REL_GATE_ID}"
+
+      - name: Upload baseline artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: baseline-${{ env.EVAL_ID }}
+          path: elixir/tmp/evals/${{ env.EVAL_ID }}
+          if-no-files-found: error
