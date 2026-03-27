@@ -83,6 +83,9 @@ The agent should be able to talk to Linear, either via a configured Linear MCP s
 - Treat a single persistent Linear comment as the source of truth for progress.
 - Use that single workpad comment for all progress and handoff notes; do not post separate "done"/summary comments.
 - Treat any ticket-authored `Validation`, `Test Plan`, or `Testing` section as non-negotiable acceptance input: mirror it in the workpad and execute it before considering the work complete.
+- Normalize underspecified issues against `elixir/docs/linear_issue_template.md` in the workpad
+  before implementation. If required fields are missing, reconstruct them from repo context when
+  possible and record the remaining ambiguity explicitly.
 - When meaningful out-of-scope improvements are discovered during execution,
   file a separate Linear issue instead of expanding scope. The follow-up issue
   must include a clear title, description, and acceptance criteria, be placed in
